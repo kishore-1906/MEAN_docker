@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: adminpassword
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mean-net
+
+  backend:
+    image: kishore190/mean-backend:latest
+    container_name: mean-backend
+    restart: always
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://admin:adminpassword@mongo:27017/mean-db?authSource=admin
+      NODE_ENV: production
+      PORT: 3000
+    networks:
+      - mean-net
+
+  frontend:
+    image: kishore190/mean-frontend:latest
+    container_name: mean-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - mean-net
+
+networks:
+  mean-net:
+
+volumes:
+  mongo_data:
+
