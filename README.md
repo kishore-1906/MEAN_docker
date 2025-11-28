@@ -1,27 +1,91 @@
-In this DevOps task, you need to build and deploy a full-stack CRUD application using the MEAN stack (MongoDB, Express, Angular 15, and Node.js). The backend will be developed with Node.js and Express to provide REST APIs, connecting to a MongoDB database. The frontend will be an Angular application utilizing HTTPClient for communication.  
+# MEAN CRUD App – Docker + CI/CD + AWS Deployment
 
-The application will manage a collection of tutorials, where each tutorial includes an ID, title, description, and published status. Users will be able to create, retrieve, update, and delete tutorials. Additionally, a search box will allow users to find tutorials by title.
+This is a simple MEAN (MongoDB, Express, Angular, Node.js) CRUD application that is fully containerized using Docker, deployed on AWS EC2, and automated using GitHub Actions CI/CD.
 
-## Project setup
+---
 
-### Node.js Server
+## Features
 
-cd backend
+- Angular frontend (CRUD UI)
+- Node.js + Express backend API
+- MongoDB database
+- Docker images for frontend and backend
+- Docker Compose for multi-container deployment
+- CI/CD pipeline using GitHub Actions
+- Automatic deployment to EC2
+- Nginx serving Angular UI on port 80
 
-npm install
+---
 
-You can update the MongoDB credentials by modifying the `db.config.js` file located in `app/config/`.
+## Project Structure
 
-Run `node server.js`
+backend/   → Express API
+frontend/  → Angular UI
+docker-compose.yml
+.github/workflows/cicd.yml
 
-### Angular Client
+---
 
-cd frontend
+## Docker
 
-npm install
+### Backend Dockerfile
 
-Run `ng serve --port 8081`
+FROM node:18-alpine WORKDIR /usr/src/app COPY package*.json ./ RUN npm install --only=production COPY . . EXPOSE 3000 CMD ["node", "server.js"]
 
-You can modify the `src/app/services/tutorial.service.ts` file to adjust how the frontend interacts with the backend.
+### Frontend Dockerfile
 
-Navigate to `http://localhost:8081/`
+FROM node:18-alpine AS build WORKDIR /app COPY package*.json ./ RUN npm install COPY . . RUN npm run build -- --configuration=production
+
+FROM nginx:alpine COPY --from=build /app/dist/angular-15-crud /usr/share/nginx/html EXPOSE 80
+
+---
+
+## Docker Compose
+
+version: "3.9"
+
+services: mongo: image: mongo:6 environment: MONGO_INITDB_ROOT_USERNAME: admin MONGO_INITDB_ROOT_PASSWORD: adminpassword
+
+backend: image: kishore190/mean-backend:latest environment: MONGO_URI: mongodb://admin:adminpassword@mongo:27017/dd_db?authSource=admin ports: - "3000:3000"
+
+frontend: image: kishore190/mean-frontend:latest ports: - "80:80"
+
+---
+
+## AWS Deployment Steps
+
+1. Launch an EC2 Ubuntu instance  
+2. Install Docker & Docker Compose  
+3. Clone the repository:
+
+cd /opt git clone <repo-url> cd mean-app
+
+4. Start services:
+
+docker compose up -d
+
+5. Access the application:
+
+- Frontend → http://EC2_PUBLIC_IP  
+- Backend API → http://EC2_PUBLIC_IP:3000/api/tutorials  
+
+---
+
+## CI/CD – GitHub Actions
+
+The pipeline:
+
+- Builds Docker images  
+- Pushes to Docker Hub  
+- SSH into EC2  
+- Pulls updated images  
+- Restarts containers  
+
+Workflow file: .github/workflows/cicd.yml
+
+---
+
+## Important Note
+
+Do *NOT delete* the EC2 instance.  
+You may *stop it*, but keep it available for the next-round
