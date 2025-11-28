@@ -88,4 +88,3 @@ Workflow file: .github/workflows/cicd.yml
 ## Important Note
 
 Do *NOT delete* the EC2 instance.  
-You may *stop it*, but keep it available for the next-round
